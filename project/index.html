@@ -28,8 +28,7 @@
         <p class="intro__eyebrow">Формы и хранилища</p>
         <h1 class="intro__title" id="page-title">Сохраненная карточка</h1>
         <p class="intro__lead">
-          Выберите тему, настройте форму и самостоятельно свяжите ввод,
-          отображение и хранение данных.
+          Укажите название, даты и заметку о мероприятии.
         </p>
       </section>
 
@@ -37,7 +36,7 @@
         <header class="workspace__header">
           <div>
             <p class="workspace__kicker">Рабочая область</p>
-            <h2 class="workspace__title" id="workspace-title">Ваша тема</h2>
+            <h2 class="workspace__title" id="workspace-title">Мероприятие</h2>
           </div>
 
           <p class="workspace__status" aria-live="polite">Данные еще не проверены</p>
@@ -49,8 +48,7 @@
           <div class="app-state__content">
             <h3 class="app-state__title">Карточка пока не создана</h3>
             <p class="app-state__text">
-              Начните с формы. После сохранения это состояние должно смениться
-              просмотром карточки.
+              Добавьте название, даты и заметку о мероприятии.
             </p>
             <button class="button button--primary" type="button" data-action="create">
               Создать карточку
@@ -58,7 +56,7 @@
           </div>
         </section>
 
-        <!-- Состояние 2: студент дополняет форму под выбранную тему. -->
+        <!-- Состояние 2: форма создания и редактирования мероприятия. -->
         <section class="app-state app-state--editor" data-state-panel="editor" hidden>
           <p class="app-state__index">02</p>
 
@@ -66,27 +64,62 @@
             <header class="card-form__header">
               <div>
                 <p class="card-form__kicker">Редактирование</p>
-                <h3 class="card-form__title">Данные карточки</h3>
+                <h3 class="card-form__title">Данные мероприятия</h3>
               </div>
-              <p class="card-form__note">Добавьте еще минимум три осмысленных поля</p>
+              <p class="card-form__note">Поля со звездочкой обязательны</p>
             </header>
 
-            <!-- Это один пример связки label, id и name. Остальные поля создайте сами. -->
             <div class="field">
-              <label class="field__label" for="card-title">Название</label>
+              <label class="field__label" for="card-title">Название мероприятия *</label>
               <input
                 class="field__control"
                 id="card-title"
                 name="title"
                 type="text"
                 minlength="3"
-                placeholder="Например, Городской маршрут"
+                maxlength="100"
+                placeholder="Например, Фестиваль науки"
+                aria-describedby="card-title-hint"
                 required
               />
-              <span class="field__hint">Минимум 3 символа</span>
+              <span class="field__hint" id="card-title-hint">От 3 до 100 символов</span>
             </div>
 
-            <!-- Добавьте поля, которые описывают именно вашу тему. -->
+            <div class="field">
+              <label class="field__label" for="card-start-date">Дата начала *</label>
+              <input
+                class="field__control"
+                id="card-start-date"
+                name="startDate"
+                type="date"
+                required
+              />
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="card-end-date">Дата окончания *</label>
+              <input
+                class="field__control"
+                id="card-end-date"
+                name="endDate"
+                type="date"
+                required
+              />
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="card-note">Заметка</label>
+              <textarea
+                class="field__control"
+                id="card-note"
+                name="note"
+                rows="4"
+                maxlength="500"
+                placeholder="Место проведения, программа или другие детали"
+                aria-describedby="card-note-hint"
+              ></textarea>
+              <span class="field__hint" id="card-note-hint">Необязательное поле, до 500 символов</span>
+            </div>
 
             <div class="card-form__actions">
               <button class="button button--primary" type="submit">
@@ -99,20 +132,27 @@
           </form>
         </section>
 
-        <!-- Состояние 3: сюда нужно вывести все сохраненные значения. -->
+        <!-- Состояние 3: просмотр сохраненного мероприятия. -->
         <section class="app-state app-state--viewer" data-state-panel="viewer" hidden>
           <p class="app-state__index">03</p>
 
           <article class="saved-card">
-            <p class="saved-card__label">Сохраненная карточка</p>
-            <h3 class="saved-card__title">Название появится здесь</h3>
+            <p class="saved-card__label">Сохраненное мероприятие</p>
+            <h3 class="saved-card__title" data-card-field="title"></h3>
 
             <dl class="saved-card__details">
               <div class="saved-card__row">
-                <dt>Свойство</dt>
-                <dd>Значение</dd>
+                <dt>Дата начала</dt>
+                <dd data-card-field="startDate"></dd>
               </div>
-              <!-- Добавьте строки или другую разметку для всех полей формы. -->
+              <div class="saved-card__row">
+                <dt>Дата окончания</dt>
+                <dd data-card-field="endDate"></dd>
+              </div>
+              <div class="saved-card__row">
+                <dt>Заметка</dt>
+                <dd data-card-field="note"></dd>
+              </div>
             </dl>
 
             <div class="saved-card__actions">
