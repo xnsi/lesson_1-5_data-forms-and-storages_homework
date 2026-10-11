@@ -1,4 +1,8 @@
+const CARD_STORAGE_KEY = "event-card";
+const HINT_SESSION_KEY = "event-card:hint-shown";
+
 const cardForm = document.querySelector(".card-form");
+const sessionHint = document.querySelector("[data-session-hint]");
 const statePanels = document.querySelectorAll("[data-state-panel]");
 const workspaceStatus = document.querySelector(".workspace__status");
 const cardFields = document.querySelectorAll("[data-card-field]");
@@ -47,13 +51,21 @@ cardForm.addEventListener("submit", (event) => {
 
   const formData = new FormData(cardForm);
 
-  card = {
+  const newCard = {
     title: formData.get("title"),
     startDate: formData.get("startDate"),
     endDate: formData.get("endDate"),
     note: formData.get("note"),
   };
 
+  try {
+    localStorage.setItem(CARD_STORAGE_KEY, JSON.stringify(newCard));
+  } catch {
+    workspaceStatus.textContent = "Не удалось сохранить карточку. Данные остались в форме.";
+    return;
+  }
+
+  card = newCard;
   renderCard();
   showState("viewer");
   editButton.focus();
@@ -65,6 +77,13 @@ cancelButton.addEventListener("click", () => {
 });
 
 deleteButton.addEventListener("click", () => {
+  try {
+    localStorage.removeItem(CARD_STORAGE_KEY);
+  } catch {
+    workspaceStatus.textContent = "Не удалось удалить карточку. Попробуйте еще раз.";
+    return;
+  }
+
   card = null;
   cardForm.reset();
   showState("empty");
@@ -72,4 +91,48 @@ deleteButton.addEventListener("click", () => {
 });
 
 showState("empty");
+
+try {
+  const savedCard = localStorage.getItem(CARD_STORAGE_KEY);
+
+  if (savedCard !== null) {
+    const data = JSON.parse(savedCard);
+
+    if (
+      data === null ||
+      typeof data !== "object" ||
+      !["title", "startDate", "endDate", "note"].every(
+        (name) => typeof data[name] === "string",
+      ) ||
+      data.title.length < 3 ||
+      data.title.length > 100 ||
+      !data.startDate ||
+      !data.endDate ||
+      data.note.length > 500
+    ) {
+      throw new Error("Неверный формат карточки");
+    }
+
+    card = {
+      title: data.title,
+      startDate: data.startDate,
+      endDate: data.endDate,
+      note: data.note,
+    };
+    renderCard();
+    showState("viewer");
+  }
+} catch {
+  workspaceStatus.textContent = "Не удалось восстановить карточку. Можно создать новую.";
+}
+
+try {
+  sessionHint.hidden = sessionStorage.getItem(HINT_SESSION_KEY) === "1";
+
+  if (!sessionHint.hidden) {
+    sessionStorage.setItem(HINT_SESSION_KEY, "1");
+  }
+} catch {
+  sessionHint.hidden = false;
+}
 
