@@ -29,10 +29,16 @@
         <h1 class="intro__title" id="page-title">Карточки мероприятий</h1>
         <p class="intro__lead">
           Укажите название, даты и заметку о мероприятии.
+          Карточки хранятся 7 дней с последнего сохранения.
         </p>
         <p class="intro__hint" data-session-hint hidden>
           После сохранения карточка останется доступна после перезагрузки.
           Чтобы изменить ее, нажмите «Редактировать».
+        </p>
+        <p class="intro__hint" data-draft-status aria-live="polite" hidden></p>
+        <p class="intro__hint" data-expiry-notice role="status" hidden>
+          Срок хранения некоторых карточек истек. Они больше не отображаются.
+          Вы можете создать новые карточки.
         </p>
       </section>
 

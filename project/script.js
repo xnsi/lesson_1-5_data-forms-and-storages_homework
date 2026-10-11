@@ -1,8 +1,12 @@
 const CARDS_STORAGE_KEY = "event-cards";
 const HINT_SESSION_KEY = "event-card:hint-shown";
+const DRAFT_SESSION_KEY = "event-card:draft";
+const CARD_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 
 const cardForm = document.querySelector(".card-form");
 const sessionHint = document.querySelector("[data-session-hint]");
+const draftNotice = document.querySelector("[data-draft-status]");
+const expiryNotice = document.querySelector("[data-expiry-notice]");
 const statePanels = document.querySelectorAll("[data-state-panel]");
 const workspaceStatus = document.querySelector(".workspace__status");
 const cardFields = document.querySelectorAll("[data-card-field]");
@@ -80,6 +84,7 @@ function openEditor(id) {
     });
   }
 
+  validateDates();
   showState("editor");
   cardForm.elements.namedItem("title").focus();
 }
@@ -97,6 +102,7 @@ function saveCards(nextCards) {
   }
 
   cards = nextCards;
+  expiryNotice.hidden = true;
   return true;
 }
 
@@ -124,6 +130,75 @@ function readCard(data) {
   };
 }
 
+function getFormValues() {
+  return Object.fromEntries(new FormData(cardForm));
+}
+
+function validateDates() {
+  const startDate = cardForm.elements.namedItem("startDate");
+  const endDate = cardForm.elements.namedItem("endDate");
+  endDate.setCustomValidity(
+    startDate.value && endDate.value && endDate.valueAsNumber < startDate.valueAsNumber
+      ? "Дата окончания не может быть раньше даты начала."
+      : "",
+  );
+}
+
+function clearDraft() {
+  try {
+    sessionStorage.removeItem(DRAFT_SESSION_KEY);
+    draftNotice.hidden = true;
+  } catch {
+    draftNotice.hidden = false;
+    draftNotice.textContent = "Не удалось удалить черновик.";
+  }
+}
+
+function restoreDraft() {
+  try {
+    const savedDraft = sessionStorage.getItem(DRAFT_SESSION_KEY);
+    if (savedDraft === null) {
+      return;
+    }
+
+    const draft = JSON.parse(savedDraft);
+    if (
+      [...cardFields].some((field) => typeof draft?.[field.dataset.cardField] !== "string") ||
+      (draft.id !== null && typeof draft.id !== "string")
+    ) {
+      throw new Error("Неверный формат черновика");
+    }
+
+    const id = cards.some((card) => card.id === draft.id) ? draft.id : null;
+    openEditor(id);
+    cardFields.forEach((field) => {
+      const name = field.dataset.cardField;
+      cardForm.elements.namedItem(name).value = draft[name];
+    });
+    validateDates();
+    draftNotice.hidden = false;
+    draftNotice.textContent = draft.id !== null && id === null
+      ? "Карточка удалена или устарела. Черновик восстановлен как новая карточка."
+      : "Черновик восстановлен в этой вкладке.";
+  } catch {
+    draftNotice.hidden = false;
+    draftNotice.textContent = "Не удалось восстановить черновик.";
+  }
+}
+
+cardForm.addEventListener("input", () => {
+  validateDates();
+  draftNotice.hidden = false;
+  try {
+    const draft = { id: editingId, ...getFormValues() };
+    sessionStorage.setItem(DRAFT_SESSION_KEY, JSON.stringify(draft));
+    draftNotice.textContent = "Черновик сохранен в этой вкладке.";
+  } catch {
+    draftNotice.textContent = "Не удалось сохранить черновик. Значения остались в форме.";
+  }
+});
+cardForm.addEventListener("change", validateDates);
+
 createButtons.forEach((button) => {
   button.addEventListener("click", () => openEditor(null));
 });
@@ -132,18 +207,31 @@ editButton.addEventListener("click", () => openEditor(selectedId));
 cardForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
-  if (editingId !== null && !cards.some((card) => card.id === editingId)) {
-    workspaceStatus.textContent = "Карточка удалена в другой вкладке. Отмените редактирование.";
+  if (
+    editingId !== null &&
+    !cards.some((card) => card.id === editingId && Date.now() - card.savedAt < CARD_LIFETIME_MS)
+  ) {
+    workspaceStatus.textContent = "Карточка удалена или устарела. Отмените редактирование.";
     return;
   }
 
-  const formData = new FormData(cardForm);
+  validateDates();
+  if (!cardForm.reportValidity()) {
+    return;
+  }
+
+  let values;
+  try {
+    values = readCard(getFormValues());
+  } catch {
+    workspaceStatus.textContent = "Проверьте название (3–100 символов), даты и длину заметки.";
+    return;
+  }
+
   const newCard = {
     id: editingId ?? crypto.randomUUID(),
-    title: formData.get("title"),
-    startDate: formData.get("startDate"),
-    endDate: formData.get("endDate"),
-    note: formData.get("note"),
+    ...values,
+    savedAt: Date.now(),
   };
   const nextCards = editingId === null
     ? [...cards, newCard]
@@ -156,12 +244,14 @@ cardForm.addEventListener("submit", (event) => {
   selectedId = newCard.id;
   editingId = null;
   renderCollection();
+  clearDraft();
   editButton.focus();
 });
 
 cancelButton.addEventListener("click", () => {
   editingId = null;
   renderCollection();
+  clearDraft();
   (cards.length ? editButton : createButtons[0]).focus();
 });
 
@@ -175,6 +265,7 @@ deleteButton.addEventListener("click", () => {
   editingId = null;
   cardForm.reset();
   renderCollection();
+  clearDraft();
   (cards.length ? editButton : createButtons[0]).focus();
 });
 
@@ -190,17 +281,19 @@ function restoreCards() {
 
       const restoredCards = data.map((item) => {
         const values = readCard(item);
-        if (typeof item.id !== "string" || !item.id) {
-          throw new Error("Неверный идентификатор карточки");
+        if (typeof item.id !== "string" || !item.id || !Number.isFinite(item.savedAt)) {
+          throw new Error("Неверный идентификатор или время сохранения карточки");
         }
-        return { id: item.id, ...values };
+        return { id: item.id, ...values, savedAt: item.savedAt };
       });
       if (new Set(restoredCards.map((card) => card.id)).size !== restoredCards.length) {
         throw new Error("Повторяющиеся идентификаторы карточек");
       }
-      cards = restoredCards;
+      cards = restoredCards.filter((card) => Date.now() - card.savedAt < CARD_LIFETIME_MS);
+      expiryNotice.hidden = cards.length === restoredCards.length;
     } else {
       cards = [];
+      expiryNotice.hidden = true;
     }
   } catch {
     workspaceStatus.textContent = "Не удалось восстановить коллекцию. Можно создать новую.";
@@ -213,6 +306,7 @@ function restoreCards() {
 
 showState("empty");
 restoreCards();
+restoreDraft();
 
 // storage приходит в другие вкладки. Здесь только читаем, чтобы не создавать цикл.
 window.addEventListener("storage", (event) => {
