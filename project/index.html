@@ -7,7 +7,7 @@
       name="description"
       content="Домашняя работа по формам, JSON и Web Storage"
     />
-    <title>Сохраненная карточка</title>
+    <title>Карточки мероприятий</title>
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="styles.css" />
     <script src="script.js" defer></script>
@@ -26,10 +26,19 @@
     <main class="page-shell">
       <section class="intro" aria-labelledby="page-title">
         <p class="intro__eyebrow">Формы и хранилища</p>
-        <h1 class="intro__title" id="page-title">Сохраненная карточка</h1>
+        <h1 class="intro__title" id="page-title">Карточки мероприятий</h1>
         <p class="intro__lead">
-          Выберите тему, настройте форму и самостоятельно свяжите ввод,
-          отображение и хранение данных.
+          Укажите название, даты и заметку о мероприятии.
+          Карточки хранятся 7 дней с последнего сохранения.
+        </p>
+        <p class="intro__hint" data-session-hint hidden>
+          После сохранения карточка останется доступна после перезагрузки.
+          Чтобы изменить ее, нажмите «Редактировать».
+        </p>
+        <p class="intro__hint" data-draft-status aria-live="polite" hidden></p>
+        <p class="intro__hint" data-expiry-notice role="status" hidden>
+          Срок хранения некоторых карточек истек. Они больше не отображаются.
+          Вы можете создать новые карточки.
         </p>
       </section>
 
@@ -37,7 +46,7 @@
         <header class="workspace__header">
           <div>
             <p class="workspace__kicker">Рабочая область</p>
-            <h2 class="workspace__title" id="workspace-title">Ваша тема</h2>
+            <h2 class="workspace__title" id="workspace-title">Мероприятия</h2>
           </div>
 
           <p class="workspace__status" aria-live="polite">Данные еще не проверены</p>
@@ -47,10 +56,9 @@
         <section class="app-state app-state--empty" data-state-panel="empty">
           <p class="app-state__index">01</p>
           <div class="app-state__content">
-            <h3 class="app-state__title">Карточка пока не создана</h3>
+            <h3 class="app-state__title">Карточек пока нет</h3>
             <p class="app-state__text">
-              Начните с формы. После сохранения это состояние должно смениться
-              просмотром карточки.
+              Добавьте название, даты и заметку о мероприятии.
             </p>
             <button class="button button--primary" type="button" data-action="create">
               Создать карточку
@@ -58,7 +66,7 @@
           </div>
         </section>
 
-        <!-- Состояние 2: студент дополняет форму под выбранную тему. -->
+        <!-- Состояние 2: форма создания и редактирования мероприятия. -->
         <section class="app-state app-state--editor" data-state-panel="editor" hidden>
           <p class="app-state__index">02</p>
 
@@ -66,27 +74,62 @@
             <header class="card-form__header">
               <div>
                 <p class="card-form__kicker">Редактирование</p>
-                <h3 class="card-form__title">Данные карточки</h3>
+                <h3 class="card-form__title">Данные мероприятия</h3>
               </div>
-              <p class="card-form__note">Добавьте еще минимум три осмысленных поля</p>
+              <p class="card-form__note">Поля со звездочкой обязательны</p>
             </header>
 
-            <!-- Это один пример связки label, id и name. Остальные поля создайте сами. -->
             <div class="field">
-              <label class="field__label" for="card-title">Название</label>
+              <label class="field__label" for="card-title">Название мероприятия *</label>
               <input
                 class="field__control"
                 id="card-title"
                 name="title"
                 type="text"
                 minlength="3"
-                placeholder="Например, Городской маршрут"
+                maxlength="100"
+                placeholder="Например, Фестиваль науки"
+                aria-describedby="card-title-hint"
                 required
               />
-              <span class="field__hint">Минимум 3 символа</span>
+              <span class="field__hint" id="card-title-hint">От 3 до 100 символов</span>
             </div>
 
-            <!-- Добавьте поля, которые описывают именно вашу тему. -->
+            <div class="field">
+              <label class="field__label" for="card-start-date">Дата начала *</label>
+              <input
+                class="field__control"
+                id="card-start-date"
+                name="startDate"
+                type="date"
+                required
+              />
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="card-end-date">Дата окончания *</label>
+              <input
+                class="field__control"
+                id="card-end-date"
+                name="endDate"
+                type="date"
+                required
+              />
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="card-note">Заметка</label>
+              <textarea
+                class="field__control"
+                id="card-note"
+                name="note"
+                rows="4"
+                maxlength="500"
+                placeholder="Место проведения, программа или другие детали"
+                aria-describedby="card-note-hint"
+              ></textarea>
+              <span class="field__hint" id="card-note-hint">Необязательное поле, до 500 символов</span>
+            </div>
 
             <div class="card-form__actions">
               <button class="button button--primary" type="submit">
@@ -99,31 +142,47 @@
           </form>
         </section>
 
-        <!-- Состояние 3: сюда нужно вывести все сохраненные значения. -->
+        <!-- Состояние 3: просмотр сохраненного мероприятия. -->
         <section class="app-state app-state--viewer" data-state-panel="viewer" hidden>
           <p class="app-state__index">03</p>
 
-          <article class="saved-card">
-            <p class="saved-card__label">Сохраненная карточка</p>
-            <h3 class="saved-card__title">Название появится здесь</h3>
+          <div class="card-browser">
+            <nav class="card-list" aria-label="Сохраненные мероприятия">
+              <ul class="card-list__items" data-card-list></ul>
+              <button class="button button--secondary" type="button" data-action="create">
+                Добавить мероприятие
+              </button>
+            </nav>
 
-            <dl class="saved-card__details">
-              <div class="saved-card__row">
-                <dt>Свойство</dt>
-                <dd>Значение</dd>
+            <article class="saved-card">
+              <p class="saved-card__label">Сохраненное мероприятие</p>
+              <h3 class="saved-card__title" data-card-field="title"></h3>
+
+              <dl class="saved-card__details">
+                <div class="saved-card__row">
+                  <dt>Дата начала</dt>
+                  <dd data-card-field="startDate"></dd>
+                </div>
+                <div class="saved-card__row">
+                  <dt>Дата окончания</dt>
+                  <dd data-card-field="endDate"></dd>
+                </div>
+                <div class="saved-card__row">
+                  <dt>Заметка</dt>
+                  <dd data-card-field="note"></dd>
+                </div>
+              </dl>
+
+              <div class="saved-card__actions">
+                <button class="button button--primary" type="button" data-action="edit">
+                  Редактировать
+                </button>
+                <button class="button button--danger" type="button" data-action="delete">
+                  Удалить
+                </button>
               </div>
-              <!-- Добавьте строки или другую разметку для всех полей формы. -->
-            </dl>
-
-            <div class="saved-card__actions">
-              <button class="button button--primary" type="button" data-action="edit">
-                Редактировать
-              </button>
-              <button class="button button--danger" type="button" data-action="delete">
-                Удалить
-              </button>
-            </div>
-          </article>
+            </article>
+          </div>
         </section>
       </section>
     </main>
