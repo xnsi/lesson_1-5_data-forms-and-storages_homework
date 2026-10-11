@@ -131,6 +131,12 @@ editButton.addEventListener("click", () => openEditor(selectedId));
 
 cardForm.addEventListener("submit", (event) => {
   event.preventDefault();
+
+  if (editingId !== null && !cards.some((card) => card.id === editingId)) {
+    workspaceStatus.textContent = "Карточка удалена в другой вкладке. Отмените редактирование.";
+    return;
+  }
+
   const formData = new FormData(cardForm);
   const newCard = {
     id: editingId ?? crypto.randomUUID(),
@@ -172,33 +178,63 @@ deleteButton.addEventListener("click", () => {
   (cards.length ? editButton : createButtons[0]).focus();
 });
 
-try {
-  const savedCards = localStorage.getItem(CARDS_STORAGE_KEY);
+function restoreCards() {
+  try {
+    const savedCards = localStorage.getItem(CARDS_STORAGE_KEY);
 
-  if (savedCards !== null) {
-    const data = JSON.parse(savedCards);
-    if (!Array.isArray(data)) {
-      throw new Error("Неверный формат коллекции");
-    }
-
-    const restoredCards = data.map((item) => {
-      const values = readCard(item);
-      if (typeof item.id !== "string" || !item.id) {
-        throw new Error("Неверный идентификатор карточки");
+    if (savedCards !== null) {
+      const data = JSON.parse(savedCards);
+      if (!Array.isArray(data)) {
+        throw new Error("Неверный формат коллекции");
       }
-      return { id: item.id, ...values };
-    });
-    if (new Set(restoredCards.map((card) => card.id)).size !== restoredCards.length) {
-      throw new Error("Повторяющиеся идентификаторы карточек");
+
+      const restoredCards = data.map((item) => {
+        const values = readCard(item);
+        if (typeof item.id !== "string" || !item.id) {
+          throw new Error("Неверный идентификатор карточки");
+        }
+        return { id: item.id, ...values };
+      });
+      if (new Set(restoredCards.map((card) => card.id)).size !== restoredCards.length) {
+        throw new Error("Повторяющиеся идентификаторы карточек");
+      }
+      cards = restoredCards;
+    } else {
+      cards = [];
     }
-    cards = restoredCards;
+  } catch {
+    workspaceStatus.textContent = "Не удалось восстановить коллекцию. Можно создать новую.";
+    return false;
   }
 
   renderCollection();
-} catch {
-  renderCollection();
-  workspaceStatus.textContent = "Не удалось восстановить коллекцию. Можно создать новую.";
+  return true;
 }
+
+showState("empty");
+restoreCards();
+
+// storage приходит в другие вкладки. Здесь только читаем, чтобы не создавать цикл.
+window.addEventListener("storage", (event) => {
+  if (
+    event.storageArea !== localStorage ||
+    (event.key !== CARDS_STORAGE_KEY && event.key !== null)
+  ) {
+    return;
+  }
+
+  const wasEditing = !cardForm.closest("[data-state-panel]").hidden;
+  if (!restoreCards()) {
+    return;
+  }
+
+  if (wasEditing) {
+    showState("editor");
+  }
+  workspaceStatus.textContent = wasEditing
+    ? "Карточки изменены в другой вкладке. Ваши правки остались в форме."
+    : "Карточки обновлены из другой вкладки.";
+});
 
 try {
   sessionHint.hidden = sessionStorage.getItem(HINT_SESSION_KEY) === "1";
