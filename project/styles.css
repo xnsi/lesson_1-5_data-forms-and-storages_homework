@@ -129,6 +129,9 @@ textarea {
 
 .intro__hint {
   margin: 16px 0 0;
+  padding: 12px 16px;
+  border-left: 3px solid var(--accent);
+  background: var(--surface-soft);
   color: var(--muted);
   font-size: 0.85rem;
   line-height: 1.5;
@@ -218,6 +221,7 @@ textarea {
 
 .card-form__title,
 .saved-card__title {
+  overflow-wrap: anywhere;
   font-size: clamp(1.8rem, 4vw, 3rem);
 }
 
@@ -348,6 +352,7 @@ textarea.field__control {
 .saved-card__row dd {
   margin: 0;
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
   line-height: 1.55;
 }
 
