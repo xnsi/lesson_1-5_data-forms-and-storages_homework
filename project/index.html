@@ -7,7 +7,7 @@
       name="description"
       content="Домашняя работа по формам, JSON и Web Storage"
     />
-    <title>Сохраненная карточка</title>
+    <title>Карточки мероприятий</title>
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="styles.css" />
     <script src="script.js" defer></script>
@@ -26,7 +26,7 @@
     <main class="page-shell">
       <section class="intro" aria-labelledby="page-title">
         <p class="intro__eyebrow">Формы и хранилища</p>
-        <h1 class="intro__title" id="page-title">Сохраненная карточка</h1>
+        <h1 class="intro__title" id="page-title">Карточки мероприятий</h1>
         <p class="intro__lead">
           Укажите название, даты и заметку о мероприятии.
         </p>
@@ -40,7 +40,7 @@
         <header class="workspace__header">
           <div>
             <p class="workspace__kicker">Рабочая область</p>
-            <h2 class="workspace__title" id="workspace-title">Мероприятие</h2>
+            <h2 class="workspace__title" id="workspace-title">Мероприятия</h2>
           </div>
 
           <p class="workspace__status" aria-live="polite">Данные еще не проверены</p>
@@ -50,7 +50,7 @@
         <section class="app-state app-state--empty" data-state-panel="empty">
           <p class="app-state__index">01</p>
           <div class="app-state__content">
-            <h3 class="app-state__title">Карточка пока не создана</h3>
+            <h3 class="app-state__title">Карточек пока нет</h3>
             <p class="app-state__text">
               Добавьте название, даты и заметку о мероприятии.
             </p>
@@ -140,34 +140,43 @@
         <section class="app-state app-state--viewer" data-state-panel="viewer" hidden>
           <p class="app-state__index">03</p>
 
-          <article class="saved-card">
-            <p class="saved-card__label">Сохраненное мероприятие</p>
-            <h3 class="saved-card__title" data-card-field="title"></h3>
-
-            <dl class="saved-card__details">
-              <div class="saved-card__row">
-                <dt>Дата начала</dt>
-                <dd data-card-field="startDate"></dd>
-              </div>
-              <div class="saved-card__row">
-                <dt>Дата окончания</dt>
-                <dd data-card-field="endDate"></dd>
-              </div>
-              <div class="saved-card__row">
-                <dt>Заметка</dt>
-                <dd data-card-field="note"></dd>
-              </div>
-            </dl>
-
-            <div class="saved-card__actions">
-              <button class="button button--primary" type="button" data-action="edit">
-                Редактировать
+          <div class="card-browser">
+            <nav class="card-list" aria-label="Сохраненные мероприятия">
+              <ul class="card-list__items" data-card-list></ul>
+              <button class="button button--secondary" type="button" data-action="create">
+                Добавить мероприятие
               </button>
-              <button class="button button--danger" type="button" data-action="delete">
-                Удалить
-              </button>
-            </div>
-          </article>
+            </nav>
+
+            <article class="saved-card">
+              <p class="saved-card__label">Сохраненное мероприятие</p>
+              <h3 class="saved-card__title" data-card-field="title"></h3>
+
+              <dl class="saved-card__details">
+                <div class="saved-card__row">
+                  <dt>Дата начала</dt>
+                  <dd data-card-field="startDate"></dd>
+                </div>
+                <div class="saved-card__row">
+                  <dt>Дата окончания</dt>
+                  <dd data-card-field="endDate"></dd>
+                </div>
+                <div class="saved-card__row">
+                  <dt>Заметка</dt>
+                  <dd data-card-field="note"></dd>
+                </div>
+              </dl>
+
+              <div class="saved-card__actions">
+                <button class="button button--primary" type="button" data-action="edit">
+                  Редактировать
+                </button>
+                <button class="button button--danger" type="button" data-action="delete">
+                  Удалить
+                </button>
+              </div>
+            </article>
+          </div>
         </section>
       </section>
     </main>

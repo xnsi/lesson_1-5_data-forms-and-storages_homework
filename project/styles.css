@@ -325,6 +325,41 @@ textarea.field__control {
   border-color: var(--danger-dark);
 }
 
+.card-browser {
+  min-width: 0;
+}
+
+.card-list {
+  padding: 24px 48px;
+  border-bottom: 1px solid var(--line);
+}
+
+.card-list__items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.card-list__item {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.card-list__button {
+  max-width: 100%;
+  padding: 10px 14px;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.card-list__button[aria-current="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .saved-card__details {
   display: grid;
   gap: 1px;
@@ -410,6 +445,10 @@ textarea.field__control {
   .card-form,
   .saved-card {
     padding: 30px 22px 34px;
+  }
+
+  .card-list {
+    padding: 20px 22px;
   }
 
   .saved-card__row {
